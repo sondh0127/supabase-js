@@ -93,7 +93,7 @@ export default class SupabaseClient {
     this.headers = { ...DEFAULT_HEADERS, ...options?.headers }
     this.shouldThrowOnError = settings.shouldThrowOnError || false
 
-    this.auth = this._initSupabaseAuthClient(settings)
+    // this.auth = this._initSupabaseAuthClient(settings)
     this.realtime = this._initRealtimeClient({ headers: this.headers, ...settings.realtime })
 
     // this._listenForAuthEvents()
@@ -103,6 +103,16 @@ export default class SupabaseClient {
     // this.realtime.onOpen(() => console.log('OPEN'))
     // this.realtime.onClose(() => console.log('CLOSED'))
     // this.realtime.onError((e: Error) => console.log('Socket error', e))
+  }
+
+  /**
+   * setHeaders
+   */
+  public setHeaders(value: Record<string, string>) {
+    this.headers = {
+      ...this.headers,
+      ...value,
+    }
   }
 
   /**
@@ -261,32 +271,32 @@ export default class SupabaseClient {
     return this.realtime.channels as RealtimeSubscription[]
   }
 
-  private _initSupabaseAuthClient({
-    autoRefreshToken,
-    persistSession,
-    detectSessionInUrl,
-    localStorage,
-    headers,
-    fetch,
-    cookieOptions,
-    multiTab,
-  }: SupabaseClientOptions) {
-    const authHeaders = {
-      Authorization: `Bearer ${this.supabaseKey}`,
-      apikey: `${this.supabaseKey}`,
-    }
-    return new SupabaseAuthClient({
-      url: this.authUrl,
-      headers: { ...headers, ...authHeaders },
-      autoRefreshToken,
-      persistSession,
-      detectSessionInUrl,
-      localStorage,
-      fetch,
-      cookieOptions,
-      multiTab,
-    })
-  }
+  // private _initSupabaseAuthClient({
+  //   autoRefreshToken,
+  //   persistSession,
+  //   detectSessionInUrl,
+  //   localStorage,
+  //   headers,
+  //   fetch,
+  //   cookieOptions,
+  //   multiTab,
+  // }: SupabaseClientOptions) {
+  //   const authHeaders = {
+  //     Authorization: `Bearer ${this.supabaseKey}`,
+  //     apikey: `${this.supabaseKey}`,
+  //   }
+  //   return new SupabaseAuthClient({
+  //     url: this.authUrl,
+  //     headers: { ...headers, ...authHeaders },
+  //     autoRefreshToken,
+  //     persistSession,
+  //     detectSessionInUrl,
+  //     localStorage,
+  //     fetch,
+  //     cookieOptions,
+  //     multiTab,
+  //   })
+  // }
 
   private _initRealtimeClient(options?: RealtimeClientOptions) {
     return new RealtimeClient(this.realtimeUrl, {
@@ -306,9 +316,9 @@ export default class SupabaseClient {
 
   private _getAuthHeaders(): GenericObject {
     const headers: GenericObject = { ...this.headers }
-    const authBearer = this.auth.session()?.access_token ?? this.supabaseKey
+    // const authBearer = this.auth.session()?.access_token ?? this.supabaseKey
     headers['apikey'] = this.supabaseKey
-    headers['Authorization'] = headers['Authorization'] || `Bearer ${authBearer}`
+    // headers['Authorization'] = headers['Authorization'] || `Bearer ${authBearer}`
     return headers
   }
 
@@ -346,26 +356,26 @@ export default class SupabaseClient {
   //   return data
   // }
 
-  private _handleTokenChanged(
-    event: AuthChangeEvent,
-    token: string | undefined,
-    source: 'CLIENT' | 'STORAGE'
-  ) {
-    if (
-      (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') &&
-      this.changedAccessToken !== token
-    ) {
-      // Token has changed
-      this.realtime.setAuth(token!)
-      // Ideally we should call this.auth.recoverSession() - need to make public
-      // to trigger a "SIGNED_IN" event on this client.
-      if (source == 'STORAGE') this.auth.setAuth(token!)
+  // private _handleTokenChanged(
+  //   event: AuthChangeEvent,
+  //   token: string | undefined,
+  //   source: 'CLIENT' | 'STORAGE'
+  // ) {
+  //   if (
+  //     (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') &&
+  //     this.changedAccessToken !== token
+  //   ) {
+  //     // Token has changed
+  //     this.realtime.setAuth(token!)
+  //     // Ideally we should call this.auth.recoverSession() - need to make public
+  //     // to trigger a "SIGNED_IN" event on this client.
+  //     if (source == 'STORAGE') this.auth.setAuth(token!)
 
-      this.changedAccessToken = token
-    } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
-      // Token is removed
-      this.realtime.setAuth(this.supabaseKey)
-      if (source == 'STORAGE') this.auth.signOut()
-    }
-  }
+  //     this.changedAccessToken = token
+  //   } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+  //     // Token is removed
+  //     this.realtime.setAuth(this.supabaseKey)
+  //     if (source == 'STORAGE') this.auth.signOut()
+  //   }
+  // }
 }
