@@ -32,7 +32,7 @@ export default class SupabaseClient {
   /**
    * Supabase Auth allows you to create and manage user sessions for access to data that is secured by access policies.
    */
-  auth: SupabaseAuthClient
+  // auth: SupabaseAuthClient
 
   protected schema: string
   protected restUrl: string
@@ -174,15 +174,15 @@ export default class SupabaseClient {
    * Creates a channel with Broadcast and Presence.
    * Activated when vsndate query param is present in the WebSocket URL.
    */
-  channel(name: string, opts: { selfBroadcast: boolean; [key: string]: any }): RealtimeChannel {
-    const userToken = this.auth.session()?.access_token ?? this.supabaseKey
+  // channel(name: string, opts: { selfBroadcast: boolean; [key: string]: any }): RealtimeChannel {
+  //   const userToken = this.auth.session()?.access_token ?? this.supabaseKey
 
-    if (!this.realtime.isConnected()) {
-      this.realtime.connect()
-    }
+  //   if (!this.realtime.isConnected()) {
+  //     this.realtime.connect()
+  //   }
 
-    return this.realtime.channel(name, { ...opts, user_token: userToken }) as RealtimeChannel
-  }
+  //   return this.realtime.channel(name, { ...opts, user_token: userToken }) as RealtimeChannel
+  // }
 
   /**
    * Closes and removes all subscriptions and returns a list of removed
