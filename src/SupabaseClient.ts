@@ -4,9 +4,15 @@ import { Fetch, GenericObject, SupabaseClientOptions } from './lib/types'
 import { SupabaseAuthClient } from './lib/SupabaseAuthClient'
 import { SupabaseQueryBuilder } from './lib/SupabaseQueryBuilder'
 import { SupabaseStorageClient } from '@supabase/storage-js'
+import { FunctionsClient } from '@supabase/functions-js'
 import { PostgrestClient } from '@supabase/postgrest-js'
 import { AuthChangeEvent } from '@supabase/gotrue-js'
-import { RealtimeClient, RealtimeSubscription, RealtimeClientOptions } from '@supabase/realtime-js'
+import {
+  RealtimeClient,
+  RealtimeSubscription,
+  RealtimeClientOptions,
+  RealtimeChannel,
+} from '@supabase/realtime-js'
 
 const DEFAULT_OPTIONS = {
   schema: 'public',
@@ -33,6 +39,7 @@ export default class SupabaseClient {
   protected realtimeUrl: string
   protected authUrl: string
   protected storageUrl: string
+  protected functionsUrl: string
   protected realtime: RealtimeClient
   protected multiTab: boolean
   protected fetch?: Fetch
@@ -71,6 +78,15 @@ export default class SupabaseClient {
     this.realtimeUrl = `${_supabaseUrl}/realtime/v1`.replace('http', 'ws')
     this.authUrl = `${_supabaseUrl}/auth/v1`
     this.storageUrl = `${_supabaseUrl}/storage/v1`
+
+    const isPlatform = _supabaseUrl.match(/(supabase\.co)|(supabase\.in)/)
+    if (isPlatform) {
+      const urlParts = _supabaseUrl.split('.')
+      this.functionsUrl = `${urlParts[0]}.functions.${urlParts[1]}.${urlParts[2]}`
+    } else {
+      this.functionsUrl = `${_supabaseUrl}/functions/v1`
+    }
+
     this.schema = settings.schema
     this.multiTab = settings.multiTab
     this.fetch = settings.fetch
@@ -87,6 +103,16 @@ export default class SupabaseClient {
     // this.realtime.onOpen(() => console.log('OPEN'))
     // this.realtime.onClose(() => console.log('CLOSED'))
     // this.realtime.onError((e: Error) => console.log('Socket error', e))
+  }
+
+  /**
+   * Supabase Functions allows you to deploy and invoke edge functions.
+   */
+  get functions() {
+    return new FunctionsClient(this.functionsUrl, {
+      headers: this._getAuthHeaders(),
+      customFetch: this.fetch,
+    })
   }
 
   /**
@@ -135,6 +161,20 @@ export default class SupabaseClient {
   }
 
   /**
+   * Creates a channel with Broadcast and Presence.
+   * Activated when vsndate query param is present in the WebSocket URL.
+   */
+  channel(name: string, opts: { selfBroadcast: boolean; [key: string]: any }): RealtimeChannel {
+    const userToken = this.auth.session()?.access_token ?? this.supabaseKey
+
+    if (!this.realtime.isConnected()) {
+      this.realtime.connect()
+    }
+
+    return this.realtime.channel(name, { ...opts, user_token: userToken }) as RealtimeChannel
+  }
+
+  /**
    * Closes and removes all subscriptions and returns a list of removed
    * subscriptions and their errors.
    */
@@ -151,6 +191,23 @@ export default class SupabaseClient {
         error,
       }
     })
+  }
+
+  /**
+   * Closes and removes a channel and returns the number of open channels.
+   *
+   * @param channel The channel you want to close and remove.
+   */
+  async removeChannel(
+    channel: RealtimeChannel
+  ): Promise<{ data: { openChannels: number }; error: Error | null }> {
+    const { error } = await this._closeSubscription(channel)
+    const allChans: RealtimeSubscription[] = this.getSubscriptions()
+    const openChanCount = allChans.filter((chan) => chan.isJoined()).length
+
+    if (allChans.length === 0) await this.realtime.disconnect()
+
+    return { data: { openChannels: openChanCount }, error }
   }
 
   /**
@@ -171,7 +228,7 @@ export default class SupabaseClient {
   }
 
   private async _closeSubscription(
-    subscription: RealtimeSubscription
+    subscription: RealtimeSubscription | RealtimeChannel
   ): Promise<{ error: Error | null }> {
     let error = null
 
@@ -186,7 +243,7 @@ export default class SupabaseClient {
   }
 
   private _unsubscribeSubscription(
-    subscription: RealtimeSubscription
+    subscription: RealtimeSubscription | RealtimeChannel
   ): Promise<{ error: Error | null }> {
     return new Promise((resolve) => {
       subscription
@@ -201,7 +258,7 @@ export default class SupabaseClient {
    * Returns an array of all your subscriptions.
    */
   getSubscriptions(): RealtimeSubscription[] {
-    return this.realtime.channels
+    return this.realtime.channels as RealtimeSubscription[]
   }
 
   private _initSupabaseAuthClient({
@@ -211,6 +268,8 @@ export default class SupabaseClient {
     localStorage,
     headers,
     fetch,
+    cookieOptions,
+    multiTab,
   }: SupabaseClientOptions) {
     const authHeaders = {
       Authorization: `Bearer ${this.supabaseKey}`,
@@ -224,6 +283,8 @@ export default class SupabaseClient {
       detectSessionInUrl,
       localStorage,
       fetch,
+      cookieOptions,
+      multiTab,
     })
   }
 
@@ -244,7 +305,7 @@ export default class SupabaseClient {
   }
 
   private _getAuthHeaders(): GenericObject {
-    const headers: GenericObject = this.headers
+    const headers: GenericObject = { ...this.headers }
     const authBearer = this.auth.session()?.access_token ?? this.supabaseKey
     headers['apikey'] = this.supabaseKey
     headers['Authorization'] = headers['Authorization'] || `Bearer ${authBearer}`
