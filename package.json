@@ -19,7 +19,7 @@
   "module": "dist/module/index.js",
   "types": "dist/module/index.d.ts",
   "sideEffects": false,
-  "repository": "supabase/supabase-js",
+  "repository": "sigma-interactive/supabase-js",
   "scripts": {
     "clean": "rimraf dist docs",
     "coverage": "jest --runInBand --coverage",
