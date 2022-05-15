@@ -1,6 +1,6 @@
 # `supabase-js`
 
-An isomorphic JavaScript client for Supabase.
+An isomorphic JavaScript client for Supabase. Fork for Sigma Interactive
 
 - **Documentation:** https://supabase.com/docs/client/supabase-client
 - TypeDoc: https://supabase.github.io/supabase-js
