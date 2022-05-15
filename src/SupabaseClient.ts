@@ -96,8 +96,8 @@ export default class SupabaseClient {
     this.auth = this._initSupabaseAuthClient(settings)
     this.realtime = this._initRealtimeClient({ headers: this.headers, ...settings.realtime })
 
-    this._listenForAuthEvents()
-    this._listenForMultiTabEvents()
+    // this._listenForAuthEvents()
+    // this._listenForMultiTabEvents()
 
     // In the future we might allow the user to pass in a logger to receive these events.
     // this.realtime.onOpen(() => console.log('OPEN'))
