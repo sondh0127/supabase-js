@@ -1,6 +1,6 @@
 import SupabaseClient from './SupabaseClient'
 import { SupabaseClientOptions, SupabaseRealtimePayload } from './lib/types'
-import { User as AuthUser, Session as AuthSession } from '@supabase/gotrue-js'
+// import { User as AuthUser, Session as AuthSession } from '@supabase/gotrue-js'
 export * from '@supabase/gotrue-js'
 export {
   PostgrestResponse,
@@ -26,6 +26,6 @@ export {
   SupabaseClient,
   SupabaseClientOptions,
   SupabaseRealtimePayload,
-  AuthUser,
-  AuthSession,
+  // AuthUser,
+  // AuthSession,
 }
