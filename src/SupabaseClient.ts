@@ -312,39 +312,39 @@ export default class SupabaseClient {
     return headers
   }
 
-  private _listenForMultiTabEvents() {
-    if (!this.multiTab || !isBrowser() || !window?.addEventListener) {
-      return null
-    }
+  // private _listenForMultiTabEvents() {
+  //   if (!this.multiTab || !isBrowser() || !window?.addEventListener) {
+  //     return null
+  //   }
 
-    try {
-      return window?.addEventListener('storage', (e: StorageEvent) => {
-        if (e.key === STORAGE_KEY) {
-          const newSession = JSON.parse(String(e.newValue))
-          const accessToken: string | undefined =
-            newSession?.currentSession?.access_token ?? undefined
-          const previousAccessToken = this.auth.session()?.access_token
-          if (!accessToken) {
-            this._handleTokenChanged('SIGNED_OUT', accessToken, 'STORAGE')
-          } else if (!previousAccessToken && accessToken) {
-            this._handleTokenChanged('SIGNED_IN', accessToken, 'STORAGE')
-          } else if (previousAccessToken !== accessToken) {
-            this._handleTokenChanged('TOKEN_REFRESHED', accessToken, 'STORAGE')
-          }
-        }
-      })
-    } catch (error) {
-      console.error('_listenForMultiTabEvents', error)
-      return null
-    }
-  }
+  //   try {
+  //     return window?.addEventListener('storage', (e: StorageEvent) => {
+  //       if (e.key === STORAGE_KEY) {
+  //         const newSession = JSON.parse(String(e.newValue))
+  //         const accessToken: string | undefined =
+  //           newSession?.currentSession?.access_token ?? undefined
+  //         const previousAccessToken = this.auth.session()?.access_token
+  //         if (!accessToken) {
+  //           this._handleTokenChanged('SIGNED_OUT', accessToken, 'STORAGE')
+  //         } else if (!previousAccessToken && accessToken) {
+  //           this._handleTokenChanged('SIGNED_IN', accessToken, 'STORAGE')
+  //         } else if (previousAccessToken !== accessToken) {
+  //           this._handleTokenChanged('TOKEN_REFRESHED', accessToken, 'STORAGE')
+  //         }
+  //       }
+  //     })
+  //   } catch (error) {
+  //     console.error('_listenForMultiTabEvents', error)
+  //     return null
+  //   }
+  // }
 
-  private _listenForAuthEvents() {
-    let { data } = this.auth.onAuthStateChange((event, session) => {
-      this._handleTokenChanged(event, session?.access_token, 'CLIENT')
-    })
-    return data
-  }
+  // private _listenForAuthEvents() {
+  //   let { data } = this.auth.onAuthStateChange((event, session) => {
+  //     this._handleTokenChanged(event, session?.access_token, 'CLIENT')
+  //   })
+  //   return data
+  // }
 
   private _handleTokenChanged(
     event: AuthChangeEvent,
